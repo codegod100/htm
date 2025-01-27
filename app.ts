@@ -1,22 +1,35 @@
 import { LitElement, html } from "lit";
 import { Task } from "@lit/task";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, query } from "lit/decorators.js";
 import { authorizationUrl, finalize } from "./lib";
+import { TemplateResultType } from "lit/directive-helpers.js";
 const meta = await fetch("/client-metadata.json").then((r) => r.json());
-const url = await authorizationUrl("nandi.weird.one", meta);
 
 @customElement("my-element")
 export class MyElement extends LitElement {
   @property({ type: Number }) count = 0;
   @property({ type: String }) json = "";
+  // @property({ type: String }) url = html``;
+  @query("input", true) _input!: HTMLInputElement;
+  form = html``;
+
   render() {
-    return html`<p>
-        Hello from my template. ${this.count} ${this.json}
-        <a href="${url}">authorize</a>
-      </p>
+    if (!localStorage["atcute-oauth:sessions"]) {
+      this.form = html`<input @change="${this._update}" type="text" />`;
+    }
+    return html`<p>Hello from my template. ${this.count} ${this.json}</p>
       <button @click="${this._increment}">click me</button>
-      <button @click="${this._reset}">reset</button>`;
+      <button @click="${this._reset}">reset</button>
+      ${this.form}`;
   }
+
+  private async _update() {
+    console.log("updating", this._input.value);
+    const url = await authorizationUrl(this._input.value, meta);
+    // this.url = html`<a href="${url}">authorize</a>`;
+    location.assign(url);
+  }
+  private async _login() {}
   private _increment() {
     this.count++;
   }
