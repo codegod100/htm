@@ -17,11 +17,14 @@ export class MyElement extends LitElement {
     if (!localStorage["atcute-oauth:sessions"]) {
       this.form = html`<input @change="${this._update}" type="text" />`;
     }
-    return html`<p>Hello from my template. ${this.count} ${this.json}</p>
-      <button @click="${this._increment}">click me</button>
+    return html`<p class="text-green-500">Hello from my template. ${this.count} ${this.json}</p>
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 active:scale-9" @click="${this._increment}">click me</button>
       <button @click="${this._reset}">reset</button>
       ${this.form}`;
   }
+  createRenderRoot() {
+    return this;
+}
 
   private async _update() {
     console.log("updating", this._input.value);

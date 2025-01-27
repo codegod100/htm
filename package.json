@@ -13,8 +13,10 @@
     "@atcute/oauth-browser-client": "^1.0.9",
     "@atproto/api": "^0.13.31",
     "@lit/task": "^1.0.2",
+    "bun-plugin-tailwind": "^0.0.14",
     "lit": "^3.2.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0"
   }
 }

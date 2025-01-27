@@ -22,4 +22,5 @@ Bun.serve({
 
     return Response.json({ yolo: "molo" });
   },
+  development: true,
 });
