@@ -1,0 +1,20 @@
+{
+  "name": "htm",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@atcute/bluesky": "^1.0.12",
+    "@atcute/oauth-browser-client": "^1.0.9",
+    "@atproto/api": "^0.13.31",
+    "@lit/task": "^1.0.2",
+    "lit": "^3.2.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}
