@@ -7,6 +7,7 @@ import cards from "./templates/cards.html";
 import { getProfile, listRecords, metadata } from "./lib";
 import { layout } from "./utils";
 import type { HTMLBundle } from "bun";
+console.log("http://localhost:3000");
 Bun.serve({
   static: {
     "/": main,
