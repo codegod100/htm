@@ -1,10 +1,13 @@
 import "@atcute/bluesky/lexicons";
 import { CredentialManager, XRPC } from "@atcute/client";
 import type { AppBskyActorDefs } from "@atproto/api";
+import * as TID from "@atcute/tid";
 import {
   configureOAuth,
   createAuthorizationUrl,
   finalizeAuthorization,
+  getSession,
+  OAuthUserAgent,
   resolveFromIdentity,
   type Session,
 } from "@atcute/oauth-browser-client";
@@ -121,4 +124,75 @@ export async function resolveHandle(
 
 export function cdnImage(did: string, link: string): string {
   return `https://cdn.bsky.app/img/feed_thumbnail/plain/${did}/${link}`;
+}
+
+type PostContext = {
+  text: string;
+  metadata: Metadata;
+  image?: Blob;
+  handle: string;
+};
+
+async function UrlPreview(url: string): Promise<Link> {
+  const resp = await fetch(
+    `https://cardyb.bsky.app/v1/extract?url=${url}`,
+  ).then((r) => r.json());
+  return resp;
+}
+
+type Link = { url: string; image: string; title: string; description: string };
+async function parseText(text: string): Promise<Link[]> {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+
+  const previews: Link[] = [];
+  for (const part of parts) {
+    if (part.match(/^https?:\/\//)) {
+      previews.push(await UrlPreview(part));
+    }
+  }
+  return previews;
+}
+
+export async function post({ text, metadata, image, handle }: PostContext) {
+  configureOAuth({ metadata });
+  const { identity } = await resolveFromIdentity(handle);
+  const session = await getSession(identity.id, {
+    allowStale: true,
+  });
+  const agent = new OAuthUserAgent(session);
+  const rpc = new XRPC({ handler: agent });
+
+  let imageRecord = null;
+  if (image && image.size !== 0) {
+    const resp = await rpc.call("com.atproto.repo.uploadBlob", {
+      data: image,
+    });
+    console.log({ resp });
+    // const link = resp.data.blob.ref.$link;
+
+    imageRecord = {
+      $type: "blob",
+      ref: {
+        $link: resp.data.blob.ref.$link,
+      },
+      mimeType: resp.data.blob.mimeType,
+      size: image.size,
+    };
+  }
+  const links = await parseText(text);
+
+  await rpc.call("com.atproto.repo.putRecord", {
+    data: {
+      repo: session.info.sub,
+      collection: "nandi.schemas.card",
+      rkey: TID.now(),
+      record: {
+        $type: "nandi.schemas.card",
+        text,
+        image: imageRecord,
+        links,
+      },
+      validate: false,
+    },
+  });
 }

@@ -11,6 +11,7 @@
   "dependencies": {
     "@atcute/bluesky": "^1.0.12",
     "@atcute/oauth-browser-client": "^1.0.9",
+    "@atcute/tid": "^1.0.2",
     "@atproto/api": "^0.13.31",
     "@lit/task": "^1.0.2",
     "bun-plugin-tailwind": "^0.0.14",
