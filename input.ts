@@ -8,6 +8,11 @@ export class Input extends LitElement {
   image;
   @property()
   imageTag: string;
+  @property()
+  disabled: boolean;
+  @property()
+  submit_value: string = "Submit query";
+
   @query("textarea", true) _input!: HTMLInputElement;
   // onchange={async (e) => {
   //   console.log(${image});
@@ -76,12 +81,16 @@ export class Input extends LitElement {
             @submit=${{
               handleEvent: async (e) => {
                 e.preventDefault();
+                this.submit_value = "Loading...";
+                this.disabled = true;
+                const repo = new URLSearchParams(location.search).get("repo");
                 await post({
                   text: this._input.value,
                   metadata: meta,
                   image: this.image,
-                  handle: "nandi.weird.one",
+                  handle: repo!,
                 });
+                location.reload();
               },
             }}
           >
@@ -123,7 +132,11 @@ export class Input extends LitElement {
             <div
               class="mt-2 w-fit px-3 py-1 bg-gray-200 text-black border border-black rounded-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <input type="submit" />
+              <input
+                type="submit"
+                value=${this.submit_value}
+                ${this.disabled ? "disabled" : ""}
+              />
             </div>
 
             <div>
