@@ -1,10 +1,12 @@
-import { LitElement, html } from "lit";
+import { LitElement, css, html } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { metadata, post } from "./lib";
 const meta = await fetch("/client-metadata.json").then((r) => r.json());
 @customElement("input-element")
 export class Input extends LitElement {
+  @property()
+  repo: string;
   @property()
   image: File;
   @property()
@@ -15,6 +17,43 @@ export class Input extends LitElement {
   submit_value: string = "Submit query";
 
   @query("textarea", true) _input!: HTMLInputElement;
+  static styles = css`
+    .preview-image img {
+      margin-top: 10px;
+      max-height: 400px;
+      width: auto; /* Maintain aspect ratio */
+      height: auto; /* Maintain aspect ratio */
+    }
+    textarea {
+      width: 50%; /* Full width of container */
+      min-height: 150px; /* Minimum height */
+      padding: 12px 20px; /* Inner spacing */
+      box-sizing: border-box; /* Include padding in width/height */
+      border: 2px solid #ccc; /* Border style */
+      border-radius: 4px; /* Rounded corners */
+      background-color: #f8f8f8; /* Light background */
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      resize: vertical; /* Only allow vertical resizing */
+      line-height: 1.4; /* Line spacing */
+      color: #333; /* Text color */
+    }
+    @media (prefers-color-scheme: dark) {
+      .submit-button {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+        background: #1a1a1a;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin-top: 5px;
+      }
+    }
+  `;
   // onchange={async (e) => {
   //   console.log(${image});
   //   const bytes = await image!.arrayBuffer();
@@ -70,7 +109,7 @@ export class Input extends LitElement {
               name="image"
               accept="image/*"
               required
-              class=""
+              class="submit-button"
               @change=${async (e) => {
                 const image = (e.target as HTMLInputElement).files![0];
                 this.image = image;
@@ -98,12 +137,12 @@ export class Input extends LitElement {
                 e.preventDefault();
                 this.submit_value = "Loading...";
                 this.disabled = true;
-                const repo = new URLSearchParams(location.search).get("repo");
+                // const repo = new URLSearchParams(location.search).get("repo");
                 await post({
                   text: this._input.value,
                   metadata: meta,
                   image: this.image,
-                  handle: repo!,
+                  handle: this.repo!,
                 });
 
                 //reset values
@@ -158,6 +197,7 @@ export class Input extends LitElement {
               class="mt-2 w-fit px-3 py-1 bg-gray-200 text-black border border-black rounded-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <input
+                class="submit-button"
                 type="submit"
                 value=${this.submit_value}
                 ${this.disabled ? "disabled" : ""}
@@ -166,7 +206,7 @@ export class Input extends LitElement {
 
             <div>
               <div>
-                <div class="w-60 mt-10">
+                <div class="preview-image">
                   <!-- <img src="${this.imageTag}" alt="caption" /> -->
                   ${unsafeHTML(this.imageTag)}
                 </div>
@@ -178,7 +218,7 @@ export class Input extends LitElement {
     </div>`;
   }
 
-  createRenderRoot() {
-    return this;
-  }
+  // createRenderRoot() {
+  //   return this;
+  // }
 }

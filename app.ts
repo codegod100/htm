@@ -6,6 +6,7 @@ import { TemplateResultType } from "lit/directive-helpers.js";
 import { getCards, type Card } from "./utils";
 import { map } from "lit/directives/map.js";
 import { printFlag } from "@yuler/china-flag";
+import "./input";
 
 const meta = await fetch("/client-metadata.json").then((r) => r.json());
 
@@ -95,7 +96,9 @@ class OtherElement extends LitElement {
 class Cards extends LitElement {
   @property()
   cards: Card[] = [];
-  repo = new URLSearchParams(location.search).get("repo");
+  @property()
+  // repo = new URLSearchParams(location.search).get("repo");
+  repo = location.pathname.split("/")[2];
   @property()
   loading: string = "";
   static styles = css`
@@ -154,7 +157,7 @@ class Cards extends LitElement {
           this.cards = await getCards(this.repo!);
         }}"
       >
-        <slot></slot>
+        <input-element repo=${this.repo}></input-element>
       </div>
       <div class="cards-parent">
         ${map(

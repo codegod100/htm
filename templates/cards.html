@@ -5,13 +5,26 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Document</title>
 
-        <link rel="stylesheet" href="../style.css" />
+        <style>
+            .container {
+                width: 100%;
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 0.5rem; /* p-2 equivalent */
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .container {
+                    background-color: #000000;
+                    color: #ffffff;
+                }
+            }
+        </style>
     </head>
-    <body class="container p-2 dark:bg-black dark:text-white">
+    <body class="container">
         <div>
-            <cards-element><input-element></input-element></cards-element>
+            <cards-element></cards-element>
         </div>
-        <script type="module" src="../input.ts"></script>
-        <script type="module" src="../app.ts"></script>
+        <script type="module" src="/static/app.js"></script>
     </body>
 </html>
