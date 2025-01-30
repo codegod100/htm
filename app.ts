@@ -3,7 +3,7 @@ import { Task } from "@lit/task";
 import { customElement, property, query } from "lit/decorators.js";
 import { authorizationUrl, finalize } from "./lib";
 import { TemplateResultType } from "lit/directive-helpers.js";
-import { getCards } from "./utils";
+import { getCards, type Card } from "./utils";
 import { map } from "lit/directives/map.js";
 import { printFlag } from "@yuler/china-flag";
 
@@ -19,7 +19,8 @@ export class SmallFry extends LitElement {
 }
 @customElement("my-element")
 export class MyElement extends LitElement {
-  @property({ type: Number }) count = 0;
+  @property()
+  count = 0;
   @property({ type: String }) json = "";
   // @property({ type: String }) url = html``;
   @query("input", true) _input!: HTMLInputElement;
@@ -92,8 +93,11 @@ class OtherElement extends LitElement {
 
 @customElement("cards-element")
 class Cards extends LitElement {
-  cards = [];
+  @property()
+  cards: Card[] = [];
   repo = new URLSearchParams(location.search).get("repo");
+  @property()
+  loading: string = "";
   static styles = css`
     .cards-parent {
       column-count: 1; /* Adjust the number of columns as needed */
@@ -143,39 +147,49 @@ class Cards extends LitElement {
       text-decoration: underline;
     }
   `;
+
+  load_cards(cards: Card[]) {
+    return html`<div
+        @posted="${async () => {
+          this.cards = await getCards(this.repo!);
+        }}"
+      >
+        <slot></slot>
+      </div>
+      <div class="cards-parent">
+        ${map(
+          cards,
+          (card) =>
+            html`<div class="card">
+              <div>${card.value.text}</div>
+              ${map(
+                card.value.links,
+                (link) =>
+                  html`<a href=${link.url} class="text-blue-500 hover:underline"
+                      >${link.title}</a
+                    >${link.description}<img
+                      src="${link.image}"
+                      alt="caption"
+                    />`,
+              )}
+              ${card.image ? html`<img src=${card.image} alt="card" />` : ""}
+            </div>`,
+        )}
+      </div>`;
+  }
   render() {
+    if (this.cards.length == 0) {
+      return this._task.render({
+        complete: (cards) => {
+          return this.load_cards(cards);
+        },
+        error: (e) => html`<p>Error: ${e}</p>`,
+        pending: () => html`<p>Loading cards...</p>`,
+      });
+    }
+
+    return this.load_cards(this.cards);
     // @import "./styles.css"
-    return this._task.render({
-      complete: (cards) => {
-        return html`<slot></slot>
-          <div class="cards-parent">
-            ${map(
-              cards,
-              (card) =>
-                html`<div class="card">
-                  <div>${card.value.text}</div>
-                  ${map(
-                    card.value.links,
-                    (link) =>
-                      html`<a
-                          href=${link.url}
-                          class="text-blue-500 hover:underline"
-                          >${link.title}</a
-                        >${link.description}<img
-                          src="${link.image}"
-                          alt="caption"
-                        />`,
-                  )}
-                  ${card.image
-                    ? html`<img src=${card.image} alt="card" />`
-                    : ""}
-                </div>`,
-            )}
-          </div>`;
-      },
-      error: (e) => html`<p>Error: ${e}</p>`,
-      pending: () => html`<p>Loading cards...</p>`,
-    });
   }
   // createRenderRoot() {
   //   return this;

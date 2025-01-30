@@ -18,7 +18,7 @@ export function layout(html: string) {
   `);
 }
 
-type Card = {
+export type Card = {
   image?: string;
   value: {
     image?: {

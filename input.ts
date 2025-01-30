@@ -90,6 +90,7 @@ export class Input extends LitElement {
                   image: this.image,
                   handle: repo!,
                 });
+                this.submit_value = "Submit query";
                 // location.reload();
                 this.dispatchEvent(
                   new Event("posted", { bubbles: true, composed: true }),
