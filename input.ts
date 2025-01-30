@@ -90,7 +90,10 @@ export class Input extends LitElement {
                   image: this.image,
                   handle: repo!,
                 });
-                location.reload();
+                // location.reload();
+                this.dispatchEvent(
+                  new Event("posted", { bubbles: true, composed: true }),
+                );
               },
             }}
           >

@@ -3,7 +3,6 @@ import callback from "./callback.html";
 import template from "./template.html";
 import main from "./templates/main.html";
 import cards from "./templates/cards.html";
-
 import { getProfile, listRecords, metadata } from "./lib";
 import { layout } from "./utils";
 import type { HTMLBundle } from "bun";
@@ -13,6 +12,7 @@ Bun.serve({
     "/": main,
     "/callback": callback,
     "/cards": cards,
+    "/style.css": new Response(await Bun.file("./style.css").bytes()),
   },
 
   async fetch(req) {
@@ -21,6 +21,7 @@ Bun.serve({
       const meta = await metadata();
       return Response.json(meta);
     }
+
     const handleMatch = /^\/profile\/([^\/]+)$/.exec(new URL(req.url).pathname);
     if (handleMatch) {
       const profile = await getProfile(handleMatch[1]);

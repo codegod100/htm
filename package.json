@@ -14,10 +14,16 @@
     "@atcute/tid": "^1.0.2",
     "@atproto/api": "^0.13.31",
     "@lit/task": "^1.0.2",
+    "@yuler/china-flag": "npm:@jsr/yuler__china-flag",
     "bun-plugin-tailwind": "^0.0.14",
     "lit": "^3.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss": "^4.0.0"
+  },
+  "exports": {
+    "production": {
+      "production": "./dist/production/index.js"
+    }
   }
 }
