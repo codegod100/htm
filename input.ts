@@ -5,7 +5,8 @@ import { metadata, post } from "./lib";
 const meta = await fetch("/client-metadata.json").then((r) => r.json());
 @customElement("input-element")
 export class Input extends LitElement {
-  image;
+  @property()
+  image: File;
   @property()
   imageTag: string;
   @property()
@@ -70,6 +71,20 @@ export class Input extends LitElement {
               accept="image/*"
               required
               class=""
+              @change=${async (e) => {
+                const image = (e.target as HTMLInputElement).files![0];
+                this.image = image;
+                const bytes = await image!.arrayBuffer();
+                // const imageTag = `<img
+                //   src="data:${image!.type};base64,${btoa(bytes)}"
+                // />`;
+                const base64String = btoa(
+                  String.fromCharCode(...new Uint8Array(bytes)),
+                );
+                const imageTag = `<img src="data:${image!.type};base64,${base64String}" />`;
+                this.imageTag = imageTag;
+                console.log({ image, imageTag, bytes });
+              }}
             />
           </div>
         </form>
