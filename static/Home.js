@@ -2844,6 +2844,18 @@ async function finalize(params, metadata) {
   configureOAuth({ metadata });
   return await finalizeAuthorization(params);
 }
+async function getProfile(actor) {
+  const manager = new CredentialManager({
+    service: "https://public.api.bsky.app"
+  });
+  const rpc2 = new XRPC({ handler: manager });
+  const { data } = await rpc2.get("app.bsky.actor.getProfile", {
+    params: {
+      actor
+    }
+  });
+  return data;
+}
 async function listRecords(repo, collection) {
   const manager = new CredentialManager({
     service: "https://bsky.social"
@@ -2928,6 +2940,11 @@ async function post({ text, metadata, image, handle }) {
 
 // components/Home.ts
 var meta = await fetch("/client-metadata.json").then((r) => r.json());
+var sessions2 = JSON.parse(localStorage["atcute-oauth:sessions"]);
+var did = Object.keys(sessions2)[0];
+var profile = await getProfile(did);
+var handle = profile.handle;
+console.log({ did, profile });
 
 class Home extends LitElement {
   constructor() {
@@ -2940,18 +2957,14 @@ class Home extends LitElement {
     if (!localStorage["atcute-oauth:sessions"]) {
       this.form = html`<input @change="${this._update}" type="text" />`;
     }
-    return html`<p class="text-green-500">
-        Hello from my template.
-        <small-fry count=${this.count}></small-fry>${this.count} ${this.json}
-      </p>
-      <button
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 active:scale-9"
-        @click="${this._increment}"
-      >
-        click me
-      </button>
+    return html`
+      <div>Hello ${handle}</div>
+      <a href=${`/cards/${handle}`}>view cards</a>
+      <p>${this.count} ${this.json}</p>
+      <button @click="${this._increment}">click me</button>
       <button @click="${this._reset}">reset</button>
-      ${this.form}`;
+      ${this.form}
+    `;
   }
   createRenderRoot() {
     console.log(printFlag());
@@ -2988,5 +3001,5 @@ export {
   Home
 };
 
-//# debugId=15E186E7C9B6F97264756E2164756E21
+//# debugId=105EFD818AC09AE164756E2164756E21
 //# sourceMappingURL=Home.js.map

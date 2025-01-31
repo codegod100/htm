@@ -2876,6 +2876,18 @@ async function finalize(params, metadata) {
   configureOAuth({ metadata });
   return await finalizeAuthorization(params);
 }
+async function getProfile(actor) {
+  const manager = new CredentialManager({
+    service: "https://public.api.bsky.app"
+  });
+  const rpc2 = new XRPC({ handler: manager });
+  const { data } = await rpc2.get("app.bsky.actor.getProfile", {
+    params: {
+      actor
+    }
+  });
+  return data;
+}
 async function listRecords(repo, collection) {
   const manager = new CredentialManager({
     service: "https://bsky.social"
@@ -3000,21 +3012,30 @@ class Input extends LitElement {
         cursor: pointer;
         transition: background-color 0.3s ease;
         margin-top: 5px;
+        text-decoration: none;
       }
+    }
+
+    #back-wrapper {
+      margin-left: auto;
+      width: 130px;
     }
   `;
   render() {
-    return html` <div class="w-full lg:w-1/2">
-      <div>
-        <form enctype="multipart/form-data" method="post">
-          <div>
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              required
-              class="submit-button"
-              @change=${async (e) => {
+    return html` <div id="back-wrapper">
+        <a class="submit-button" href="/">Back Home</a>
+      </div>
+      <div class="w-full lg:w-1/2">
+        <div>
+          <form enctype="multipart/form-data" method="post">
+            <div>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                required
+                class="submit-button"
+                @change=${async (e) => {
       const image = e.target.files[0];
       this.image = image;
       const bytes = await image.arrayBuffer();
@@ -3023,15 +3044,15 @@ class Input extends LitElement {
       this.imageTag = imageTag;
       console.log({ image, imageTag, bytes });
     }}
-            />
-          </div>
-        </form>
-      </div>
-      <div>
+              />
+            </div>
+          </form>
+        </div>
         <div>
-          <form
-            class="mb-8"
-            @submit=${{
+          <div>
+            <form
+              class="mb-8"
+              @submit=${{
       handleEvent: async (e) => {
         e.preventDefault();
         this.submit_value = "Loading...";
@@ -3049,18 +3070,18 @@ class Input extends LitElement {
         this.dispatchEvent(new Event("posted", { bubbles: true, composed: true }));
       }
     }}
-          >
-            <textarea
-              name="pasted_text"
-              placeholder="paste image here and insert text"
-              class="border w-64 h-36 mt-10 bg-white text-black dark:bg-gray-800 dark:text-white"
-              @input=${{
+            >
+              <textarea
+                name="pasted_text"
+                placeholder="paste image here and insert text"
+                class="border w-64 h-36 mt-10 bg-white text-black dark:bg-gray-800 dark:text-white"
+                @input=${{
       handleEvent: () => {
         const value = this._input.value;
         console.log("test", value);
       }
     }}
-              @paste=${{
+                @paste=${{
       handleEvent: async () => {
         const clipboardItems = await navigator.clipboard.read();
         console.log({ clipboardItems });
@@ -3082,30 +3103,30 @@ class Input extends LitElement {
         }
       }
     }}
-            ></textarea>
-            <div
-              class="mt-2 w-fit px-3 py-1 bg-gray-200 text-black border border-black rounded-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <input
-                class="submit-button"
-                type="submit"
-                value=${this.submit_value}
-                ${this.disabled ? "disabled" : ""}
-              />
-            </div>
+              ></textarea>
+              <div
+                class="mt-2 w-fit px-3 py-1 bg-gray-200 text-black border border-black rounded-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <input
+                  class="submit-button"
+                  type="submit"
+                  value=${this.submit_value}
+                  ${this.disabled ? "disabled" : ""}
+                />
+              </div>
 
-            <div>
               <div>
-                <div class="preview-image">
-                  <!-- <img src="${this.imageTag}" alt="caption" /> -->
-                  ${unsafeHTML(this.imageTag)}
+                <div>
+                  <div class="preview-image">
+                    <!-- <img src="${this.imageTag}" alt="caption" /> -->
+                    ${unsafeHTML(this.imageTag)}
+                  </div>
                 </div>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
-    </div>`;
+      </div>`;
   }
 }
 __legacyDecorateClassTS([
@@ -3368,7 +3389,7 @@ class Cards extends LitElement {
     }
   `;
   load_cards(cards) {
-    return html`<div
+    return html` <div
         @posted="${async () => {
       this.cards = await getCards(this.repo);
     }}"
@@ -3423,5 +3444,5 @@ Cards = __legacyDecorateClassTS([
   customElement("cards-element")
 ], Cards);
 
-//# debugId=358D2E3657F0E12A64756E2164756E21
+//# debugId=0D8DE0D509696A4D64756E2164756E21
 //# sourceMappingURL=Cards.js.map

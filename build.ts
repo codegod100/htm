@@ -6,4 +6,4 @@ Bun.write("templates/main.html", main);
 
 const card = `<div><input-element></input-element></div><div><cards-element></cards-element></div><script type="module" src="../input.ts"></script>`;
 const cards = layout(card);
-Bun.write("templates/cards.html", cards);
+Bun.write("views/cards.html", cards);

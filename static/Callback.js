@@ -2958,6 +2958,18 @@ async function finalize(params, metadata) {
   configureOAuth({ metadata });
   return await finalizeAuthorization(params);
 }
+async function getProfile(actor) {
+  const manager = new CredentialManager({
+    service: "https://public.api.bsky.app"
+  });
+  const rpc2 = new XRPC({ handler: manager });
+  const { data } = await rpc2.get("app.bsky.actor.getProfile", {
+    params: {
+      actor
+    }
+  });
+  return data;
+}
 async function listRecords(repo, collection) {
   const manager = new CredentialManager({
     service: "https://bsky.social"
@@ -3070,5 +3082,5 @@ Callback = __legacyDecorateClassTS([
   customElement("callback-element")
 ], Callback);
 
-//# debugId=D4C44B4830B7660A64756E2164756E21
+//# debugId=F2943E564B07664564756E2164756E21
 //# sourceMappingURL=Callback.js.map

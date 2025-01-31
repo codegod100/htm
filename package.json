@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "build": "bun build --sourcemap components/* --outdir=static"
+    "build": "bun build --watch --sourcemap components/* --outdir=static"
   },
   "devDependencies": {
     "@types/bun": "latest"

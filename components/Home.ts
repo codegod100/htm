@@ -1,8 +1,13 @@
 import { printFlag } from "@yuler/china-flag";
 import { LitElement, html } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
-import { authorizationUrl } from "../lib";
+import { authorizationUrl, getProfile } from "../lib";
 const meta = await fetch("/client-metadata.json").then((r) => r.json());
+const sessions = JSON.parse(localStorage["atcute-oauth:sessions"]);
+const did = Object.keys(sessions)[0];
+const profile = await getProfile(did);
+const handle = profile.handle;
+console.log({ did, profile });
 @customElement("home-element")
 export class Home extends LitElement {
   @property()
@@ -16,18 +21,14 @@ export class Home extends LitElement {
     if (!localStorage["atcute-oauth:sessions"]) {
       this.form = html`<input @change="${this._update}" type="text" />`;
     }
-    return html`<p class="text-green-500">
-        Hello from my template.
-        <small-fry count=${this.count}></small-fry>${this.count} ${this.json}
-      </p>
-      <button
-        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 active:scale-9"
-        @click="${this._increment}"
-      >
-        click me
-      </button>
+    return html`
+      <div>Hello ${handle}</div>
+      <a href=${`/cards/${handle}`}>view cards</a>
+      <p>${this.count} ${this.json}</p>
+      <button @click="${this._increment}">click me</button>
       <button @click="${this._reset}">reset</button>
-      ${this.form}`;
+      ${this.form}
+    `;
   }
   createRenderRoot() {
     console.log(printFlag());

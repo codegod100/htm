@@ -65,7 +65,7 @@ class Cards extends LitElement {
   `;
 
   load_cards(cards: Card[]) {
-    return html`<div
+    return html` <div
         @posted="${async () => {
           this.cards = await getCards(this.repo!);
         }}"
