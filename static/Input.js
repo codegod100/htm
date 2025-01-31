@@ -2958,7 +2958,7 @@ async function post({ text, metadata, image, handle }) {
   });
 }
 
-// input.ts
+// components/Input.ts
 var meta = await fetch("/client-metadata.json").then((r) => r.json());
 
 class Input extends LitElement {
@@ -3133,7 +3133,5 @@ export {
   Input
 };
 
-export { __legacyDecorateClassTS, css, notEqual, html, LitElement, customElement, property, query, authorizationUrl, finalize, listRecords, resolveHandle2 as resolveHandle, cdnImage };
-
-//# debugId=86F3AD3F97E6ACF864756E2164756E21
-//# sourceMappingURL=input.js.map
+//# debugId=E85F386449E9005A64756E2164756E21
+//# sourceMappingURL=Input.js.map

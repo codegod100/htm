@@ -9,6 +9,45 @@ var __legacyDecorateClassTS = function(decorators, target, key, desc) {
   return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 
+// node_modules/@yuler/china-flag/mod.js
+var colors = {
+  r: "#DE2910",
+  y: "#FFDE00"
+};
+var flag = `
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrryrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrryrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrryyyrrrryrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrryyyyyyyrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrryyyrrrryrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrryrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrryrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+rrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr
+`;
+function printFlag() {
+  const lines = flag.trim().split(`
+`);
+  for (const line of lines) {
+    let print = "";
+    const csses = [];
+    for (const char of line) {
+      const color = colors[char];
+      print += `%c %c`;
+      csses.push(`background-color: ${color}`, "");
+    }
+    console.log(print, ...csses);
+  }
+}
+if (false) {
+}
+
 // node_modules/@lit/reactive-element/development/css-tag.js
 var NODE_MODE = false;
 var global = globalThis;
@@ -1578,77 +1617,6 @@ function query(selector, cache) {
     }
   };
 }
-// node_modules/lit-html/development/directive.js
-var PartType = {
-  ATTRIBUTE: 1,
-  CHILD: 2,
-  PROPERTY: 3,
-  BOOLEAN_ATTRIBUTE: 4,
-  EVENT: 5,
-  ELEMENT: 6
-};
-var directive = (c) => (...values) => ({
-  ["_$litDirective$"]: c,
-  values
-});
-
-class Directive {
-  constructor(_partInfo) {
-  }
-  get _$isConnected() {
-    return this._$parent._$isConnected;
-  }
-  _$initialize(part, parent, attributeIndex) {
-    this.__part = part;
-    this._$parent = parent;
-    this.__attributeIndex = attributeIndex;
-  }
-  _$resolve(part, props) {
-    return this.update(part, props);
-  }
-  update(_part, props) {
-    return this.render(...props);
-  }
-}
-
-// node_modules/lit-html/development/directives/unsafe-html.js
-var HTML_RESULT2 = 1;
-
-class UnsafeHTMLDirective extends Directive {
-  constructor(partInfo) {
-    super(partInfo);
-    this._value = nothing;
-    if (partInfo.type !== PartType.CHILD) {
-      throw new Error(`${this.constructor.directiveName}() can only be used in child bindings`);
-    }
-  }
-  render(value) {
-    if (value === nothing || value == null) {
-      this._templateResult = undefined;
-      return this._value = value;
-    }
-    if (value === noChange) {
-      return value;
-    }
-    if (typeof value != "string") {
-      throw new Error(`${this.constructor.directiveName}() called with a non-string value`);
-    }
-    if (value === this._value) {
-      return this._templateResult;
-    }
-    this._value = value;
-    const strings = [value];
-    strings.raw = strings;
-    return this._templateResult = {
-      ["_$litType$"]: this.constructor.resultType,
-      strings,
-      values: []
-    };
-  }
-}
-UnsafeHTMLDirective.directiveName = "unsafeHTML";
-UnsafeHTMLDirective.resultType = HTML_RESULT2;
-var unsafeHTML = directive(UnsafeHTMLDirective);
 // node_modules/@atcute/client/dist/fetch-handler.js
 var buildFetchHandler = (handler) => {
   if (typeof handler === "object") {
@@ -2958,182 +2926,67 @@ async function post({ text, metadata, image, handle }) {
   });
 }
 
-// input.ts
+// components/Home.ts
 var meta = await fetch("/client-metadata.json").then((r) => r.json());
 
-class Input extends LitElement {
+class Home extends LitElement {
   constructor() {
     super(...arguments);
-    this.submit_value = "Submit query";
+    this.count = 0;
+    this.json = "";
   }
-  static styles = css`
-    .preview-image img {
-      margin-top: 10px;
-      max-height: 400px;
-      width: auto; /* Maintain aspect ratio */
-      height: auto; /* Maintain aspect ratio */
-    }
-    textarea {
-      width: 50%; /* Full width of container */
-      min-height: 150px; /* Minimum height */
-      padding: 12px 20px; /* Inner spacing */
-      box-sizing: border-box; /* Include padding in width/height */
-      border: 2px solid #ccc; /* Border style */
-      border-radius: 4px; /* Rounded corners */
-      background-color: #f8f8f8; /* Light background */
-      font-family: Arial, sans-serif;
-      font-size: 16px;
-      resize: vertical; /* Only allow vertical resizing */
-      line-height: 1.4; /* Line spacing */
-      color: #333; /* Text color */
-    }
-    @media (prefers-color-scheme: dark) {
-      .submit-button {
-        display: inline-block;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #ffffff;
-        background: #1a1a1a;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-        margin-top: 5px;
-      }
-    }
-  `;
+  form = html``;
   render() {
-    return html` <div class="w-full lg:w-1/2">
-      <div>
-        <form enctype="multipart/form-data" method="post">
-          <div>
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              required
-              class="submit-button"
-              @change=${async (e) => {
-      const image = e.target.files[0];
-      this.image = image;
-      const bytes = await image.arrayBuffer();
-      const base64String = btoa(String.fromCharCode(...new Uint8Array(bytes)));
-      const imageTag = `<img src="data:${image.type};base64,${base64String}" />`;
-      this.imageTag = imageTag;
-      console.log({ image, imageTag, bytes });
-    }}
-            />
-          </div>
-        </form>
-      </div>
-      <div>
-        <div>
-          <form
-            class="mb-8"
-            @submit=${{
-      handleEvent: async (e) => {
-        e.preventDefault();
-        this.submit_value = "Loading...";
-        this.disabled = true;
-        await post({
-          text: this._input.value,
-          metadata: meta,
-          image: this.image,
-          handle: this.repo
-        });
-        this.submit_value = "Submit query";
-        this._input.value = "";
-        this.imageTag = "";
-        this.image = null;
-        this.dispatchEvent(new Event("posted", { bubbles: true, composed: true }));
-      }
-    }}
-          >
-            <textarea
-              name="pasted_text"
-              placeholder="paste image here and insert text"
-              class="border w-64 h-36 mt-10 bg-white text-black dark:bg-gray-800 dark:text-white"
-              @input=${{
-      handleEvent: () => {
-        const value = this._input.value;
-        console.log("test", value);
-      }
-    }}
-              @paste=${{
-      handleEvent: async () => {
-        const clipboardItems = await navigator.clipboard.read();
-        console.log({ clipboardItems });
-        for (const clipboardItem of clipboardItems) {
-          console.log({ clipboardItem });
-          const itemTypes = clipboardItem.types;
-          for (const itemType of itemTypes) {
-            console.log({ itemType });
-            const blob = await clipboardItem.getType(itemType);
-            if (itemType.includes("image/")) {
-              this.image = blob;
-            }
-            if (itemType == "text/html") {
-              const text = await blob.text();
-              console.log({ text });
-              this.imageTag = text;
-            }
-          }
-        }
-      }
-    }}
-            ></textarea>
-            <div
-              class="mt-2 w-fit px-3 py-1 bg-gray-200 text-black border border-black rounded-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <input
-                class="submit-button"
-                type="submit"
-                value=${this.submit_value}
-                ${this.disabled ? "disabled" : ""}
-              />
-            </div>
-
-            <div>
-              <div>
-                <div class="preview-image">
-                  <!-- <img src="${this.imageTag}" alt="caption" /> -->
-                  ${unsafeHTML(this.imageTag)}
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>`;
+    if (!localStorage["atcute-oauth:sessions"]) {
+      this.form = html`<input @change="${this._update}" type="text" />`;
+    }
+    return html`<p class="text-green-500">
+        Hello from my template.
+        <small-fry count=${this.count}></small-fry>${this.count} ${this.json}
+      </p>
+      <button
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:-translate-y-1 active:scale-9"
+        @click="${this._increment}"
+      >
+        click me
+      </button>
+      <button @click="${this._reset}">reset</button>
+      ${this.form}`;
+  }
+  createRenderRoot() {
+    console.log(printFlag());
+    return this;
+  }
+  async _update() {
+    console.log("updating", this._input.value);
+    const url = await authorizationUrl(this._input.value, meta);
+    location.assign(url);
+  }
+  async _login() {
+  }
+  _increment() {
+    this.count++;
+  }
+  async _reset() {
+    console.log("resetting");
+    this.count = 0;
   }
 }
 __legacyDecorateClassTS([
   property()
-], Input.prototype, "repo", undefined);
+], Home.prototype, "count", undefined);
 __legacyDecorateClassTS([
-  property()
-], Input.prototype, "image", undefined);
+  property({ type: String })
+], Home.prototype, "json", undefined);
 __legacyDecorateClassTS([
-  property()
-], Input.prototype, "imageTag", undefined);
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "disabled", undefined);
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "submit_value", undefined);
-__legacyDecorateClassTS([
-  query("textarea", true)
-], Input.prototype, "_input", undefined);
-Input = __legacyDecorateClassTS([
-  customElement("input-element")
-], Input);
+  query("input", true)
+], Home.prototype, "_input", undefined);
+Home = __legacyDecorateClassTS([
+  customElement("home-element")
+], Home);
 export {
-  Input
+  Home
 };
 
-export { __legacyDecorateClassTS, css, notEqual, html, LitElement, customElement, property, query, authorizationUrl, finalize, listRecords, resolveHandle2 as resolveHandle, cdnImage };
-
-//# debugId=86F3AD3F97E6ACF864756E2164756E21
-//# sourceMappingURL=input.js.map
+//# debugId=15E186E7C9B6F97264756E2164756E21
+//# sourceMappingURL=Home.js.map

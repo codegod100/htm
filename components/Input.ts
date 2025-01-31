@@ -1,7 +1,7 @@
 import { LitElement, css, html } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { metadata, post } from "./lib";
+import { metadata, post } from "../lib";
 const meta = await fetch("/client-metadata.json").then((r) => r.json());
 @customElement("input-element")
 export class Input extends LitElement {

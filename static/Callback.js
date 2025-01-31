@@ -537,6 +537,159 @@ if (DEV_MODE && global2.reactiveElementVersions.length > 1) {
   issueWarning("multiple-versions", `Multiple versions of Lit loaded. Loading multiple versions ` + `is not recommended.`);
 }
 
+// node_modules/@lit/task/development/task.js
+var TaskStatus = {
+  INITIAL: 0,
+  PENDING: 1,
+  COMPLETE: 2,
+  ERROR: 3
+};
+var initialState = Symbol();
+
+class Task {
+  get taskComplete() {
+    if (this._taskComplete) {
+      return this._taskComplete;
+    }
+    if (this._status === TaskStatus.PENDING) {
+      this._taskComplete = new Promise((res, rej) => {
+        this._resolveTaskComplete = res;
+        this._rejectTaskComplete = rej;
+      });
+    } else if (this._status === TaskStatus.ERROR) {
+      this._taskComplete = Promise.reject(this._error);
+    } else {
+      this._taskComplete = Promise.resolve(this._value);
+    }
+    return this._taskComplete;
+  }
+  constructor(host, task, args) {
+    this._callId = 0;
+    this._status = TaskStatus.INITIAL;
+    (this._host = host).addController(this);
+    const taskConfig = typeof task === "object" ? task : { task, args };
+    this._task = taskConfig.task;
+    this._argsFn = taskConfig.args;
+    this._argsEqual = taskConfig.argsEqual ?? shallowArrayEquals;
+    this._onComplete = taskConfig.onComplete;
+    this._onError = taskConfig.onError;
+    this.autoRun = taskConfig.autoRun ?? true;
+    if ("initialValue" in taskConfig) {
+      this._value = taskConfig.initialValue;
+      this._status = TaskStatus.COMPLETE;
+      this._previousArgs = this._getArgs?.();
+    }
+  }
+  hostUpdate() {
+    if (this.autoRun === true) {
+      this._performTask();
+    }
+  }
+  hostUpdated() {
+    if (this.autoRun === "afterUpdate") {
+      this._performTask();
+    }
+  }
+  _getArgs() {
+    if (this._argsFn === undefined) {
+      return;
+    }
+    const args = this._argsFn();
+    if (!Array.isArray(args)) {
+      throw new Error("The args function must return an array");
+    }
+    return args;
+  }
+  async _performTask() {
+    const args = this._getArgs();
+    const prev = this._previousArgs;
+    this._previousArgs = args;
+    if (args !== prev && args !== undefined && (prev === undefined || !this._argsEqual(prev, args))) {
+      await this.run(args);
+    }
+  }
+  async run(args) {
+    args ??= this._getArgs();
+    this._previousArgs = args;
+    if (this._status === TaskStatus.PENDING) {
+      this._abortController?.abort();
+    } else {
+      this._taskComplete = undefined;
+      this._resolveTaskComplete = undefined;
+      this._rejectTaskComplete = undefined;
+    }
+    this._status = TaskStatus.PENDING;
+    let result;
+    let error;
+    if (this.autoRun === "afterUpdate") {
+      queueMicrotask(() => this._host.requestUpdate());
+    } else {
+      this._host.requestUpdate();
+    }
+    const key = ++this._callId;
+    this._abortController = new AbortController;
+    let errored = false;
+    try {
+      result = await this._task(args, { signal: this._abortController.signal });
+    } catch (e) {
+      errored = true;
+      error = e;
+    }
+    if (this._callId === key) {
+      if (result === initialState) {
+        this._status = TaskStatus.INITIAL;
+      } else {
+        if (errored === false) {
+          try {
+            this._onComplete?.(result);
+          } catch {
+          }
+          this._status = TaskStatus.COMPLETE;
+          this._resolveTaskComplete?.(result);
+        } else {
+          try {
+            this._onError?.(error);
+          } catch {
+          }
+          this._status = TaskStatus.ERROR;
+          this._rejectTaskComplete?.(error);
+        }
+        this._value = result;
+        this._error = error;
+      }
+      this._host.requestUpdate();
+    }
+  }
+  abort(reason) {
+    if (this._status === TaskStatus.PENDING) {
+      this._abortController?.abort(reason);
+    }
+  }
+  get value() {
+    return this._value;
+  }
+  get error() {
+    return this._error;
+  }
+  get status() {
+    return this._status;
+  }
+  render(renderer) {
+    switch (this._status) {
+      case TaskStatus.INITIAL:
+        return renderer.initial?.();
+      case TaskStatus.PENDING:
+        return renderer.pending?.();
+      case TaskStatus.COMPLETE:
+        return renderer.complete?.(this.value);
+      case TaskStatus.ERROR:
+        return renderer.error?.(this.error);
+      default:
+        throw new Error(`Unexpected status: ${this._status}`);
+    }
+  }
+}
+var shallowArrayEquals = (oldArgs, newArgs) => oldArgs === newArgs || oldArgs.length === newArgs.length && oldArgs.every((v, i) => !notEqual(v, newArgs[i]));
 // node_modules/lit-html/development/lit-html.js
 var DEV_MODE2 = true;
 var ENABLE_EXTRA_SECURITY_HOOKS = true;
@@ -1578,77 +1731,6 @@ function query(selector, cache) {
     }
   };
 }
-// node_modules/lit-html/development/directive.js
-var PartType = {
-  ATTRIBUTE: 1,
-  CHILD: 2,
-  PROPERTY: 3,
-  BOOLEAN_ATTRIBUTE: 4,
-  EVENT: 5,
-  ELEMENT: 6
-};
-var directive = (c) => (...values) => ({
-  ["_$litDirective$"]: c,
-  values
-});
-
-class Directive {
-  constructor(_partInfo) {
-  }
-  get _$isConnected() {
-    return this._$parent._$isConnected;
-  }
-  _$initialize(part, parent, attributeIndex) {
-    this.__part = part;
-    this._$parent = parent;
-    this.__attributeIndex = attributeIndex;
-  }
-  _$resolve(part, props) {
-    return this.update(part, props);
-  }
-  update(_part, props) {
-    return this.render(...props);
-  }
-}
-
-// node_modules/lit-html/development/directives/unsafe-html.js
-var HTML_RESULT2 = 1;
-
-class UnsafeHTMLDirective extends Directive {
-  constructor(partInfo) {
-    super(partInfo);
-    this._value = nothing;
-    if (partInfo.type !== PartType.CHILD) {
-      throw new Error(`${this.constructor.directiveName}() can only be used in child bindings`);
-    }
-  }
-  render(value) {
-    if (value === nothing || value == null) {
-      this._templateResult = undefined;
-      return this._value = value;
-    }
-    if (value === noChange) {
-      return value;
-    }
-    if (typeof value != "string") {
-      throw new Error(`${this.constructor.directiveName}() called with a non-string value`);
-    }
-    if (value === this._value) {
-      return this._templateResult;
-    }
-    this._value = value;
-    const strings = [value];
-    strings.raw = strings;
-    return this._templateResult = {
-      ["_$litType$"]: this.constructor.resultType,
-      strings,
-      values: []
-    };
-  }
-}
-UnsafeHTMLDirective.directiveName = "unsafeHTML";
-UnsafeHTMLDirective.resultType = HTML_RESULT2;
-var unsafeHTML = directive(UnsafeHTMLDirective);
 // node_modules/@atcute/client/dist/fetch-handler.js
 var buildFetchHandler = (handler) => {
   if (typeof handler === "object") {
@@ -2958,182 +3040,35 @@ async function post({ text, metadata, image, handle }) {
   });
 }
 
-// input.ts
+// components/Callback.ts
 var meta = await fetch("/client-metadata.json").then((r) => r.json());
 
-class Input extends LitElement {
-  constructor() {
-    super(...arguments);
-    this.submit_value = "Submit query";
-  }
-  static styles = css`
-    .preview-image img {
-      margin-top: 10px;
-      max-height: 400px;
-      width: auto; /* Maintain aspect ratio */
-      height: auto; /* Maintain aspect ratio */
-    }
-    textarea {
-      width: 50%; /* Full width of container */
-      min-height: 150px; /* Minimum height */
-      padding: 12px 20px; /* Inner spacing */
-      box-sizing: border-box; /* Include padding in width/height */
-      border: 2px solid #ccc; /* Border style */
-      border-radius: 4px; /* Rounded corners */
-      background-color: #f8f8f8; /* Light background */
-      font-family: Arial, sans-serif;
-      font-size: 16px;
-      resize: vertical; /* Only allow vertical resizing */
-      line-height: 1.4; /* Line spacing */
-      color: #333; /* Text color */
-    }
-    @media (prefers-color-scheme: dark) {
-      .submit-button {
-        display: inline-block;
-        padding: 10px 20px;
-        font-size: 16px;
-        font-weight: 600;
-        color: #ffffff;
-        background: #1a1a1a;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-        margin-top: 5px;
-      }
-    }
-  `;
+class Callback extends LitElement {
+  params = new URLSearchParams(location.hash.slice(1));
   render() {
-    return html` <div class="w-full lg:w-1/2">
-      <div>
-        <form enctype="multipart/form-data" method="post">
-          <div>
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              required
-              class="submit-button"
-              @change=${async (e) => {
-      const image = e.target.files[0];
-      this.image = image;
-      const bytes = await image.arrayBuffer();
-      const base64String = btoa(String.fromCharCode(...new Uint8Array(bytes)));
-      const imageTag = `<img src="data:${image.type};base64,${base64String}" />`;
-      this.imageTag = imageTag;
-      console.log({ image, imageTag, bytes });
-    }}
-            />
-          </div>
-        </form>
-      </div>
-      <div>
-        <div>
-          <form
-            class="mb-8"
-            @submit=${{
-      handleEvent: async (e) => {
-        e.preventDefault();
-        this.submit_value = "Loading...";
-        this.disabled = true;
-        await post({
-          text: this._input.value,
-          metadata: meta,
-          image: this.image,
-          handle: this.repo
-        });
-        this.submit_value = "Submit query";
-        this._input.value = "";
-        this.imageTag = "";
-        this.image = null;
-        this.dispatchEvent(new Event("posted", { bubbles: true, composed: true }));
-      }
-    }}
-          >
-            <textarea
-              name="pasted_text"
-              placeholder="paste image here and insert text"
-              class="border w-64 h-36 mt-10 bg-white text-black dark:bg-gray-800 dark:text-white"
-              @input=${{
-      handleEvent: () => {
-        const value = this._input.value;
-        console.log("test", value);
-      }
-    }}
-              @paste=${{
-      handleEvent: async () => {
-        const clipboardItems = await navigator.clipboard.read();
-        console.log({ clipboardItems });
-        for (const clipboardItem of clipboardItems) {
-          console.log({ clipboardItem });
-          const itemTypes = clipboardItem.types;
-          for (const itemType of itemTypes) {
-            console.log({ itemType });
-            const blob = await clipboardItem.getType(itemType);
-            if (itemType.includes("image/")) {
-              this.image = blob;
-            }
-            if (itemType == "text/html") {
-              const text = await blob.text();
-              console.log({ text });
-              this.imageTag = text;
-            }
-          }
-        }
-      }
-    }}
-            ></textarea>
-            <div
-              class="mt-2 w-fit px-3 py-1 bg-gray-200 text-black border border-black rounded-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <input
-                class="submit-button"
-                type="submit"
-                value=${this.submit_value}
-                ${this.disabled ? "disabled" : ""}
-              />
-            </div>
-
-            <div>
-              <div>
-                <div class="preview-image">
-                  <!-- <img src="${this.imageTag}" alt="caption" /> -->
-                  ${unsafeHTML(this.imageTag)}
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>`;
+    console.log("rendering");
+    return this._task.render({
+      complete: (session) => {
+        location.assign("/");
+        html`got session`;
+      },
+      error: (e) => html`<p>Error: ${e}</p>`,
+      pending: () => html`<p>Processing...</p>`
+    });
   }
+  _task = new Task(this, {
+    task: async ([], { signal }) => {
+      console.log("loading");
+      const session = await finalize(this.params, meta);
+      console.log({ session });
+      return session;
+    },
+    args: () => []
+  });
 }
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "repo", undefined);
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "image", undefined);
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "imageTag", undefined);
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "disabled", undefined);
-__legacyDecorateClassTS([
-  property()
-], Input.prototype, "submit_value", undefined);
-__legacyDecorateClassTS([
-  query("textarea", true)
-], Input.prototype, "_input", undefined);
-Input = __legacyDecorateClassTS([
-  customElement("input-element")
-], Input);
-export {
-  Input
-};
+Callback = __legacyDecorateClassTS([
+  customElement("callback-element")
+], Callback);
 
-export { __legacyDecorateClassTS, css, notEqual, html, LitElement, customElement, property, query, authorizationUrl, finalize, listRecords, resolveHandle2 as resolveHandle, cdnImage };
-
-//# debugId=86F3AD3F97E6ACF864756E2164756E21
-//# sourceMappingURL=input.js.map
+//# debugId=D4C44B4830B7660A64756E2164756E21
+//# sourceMappingURL=Callback.js.map
